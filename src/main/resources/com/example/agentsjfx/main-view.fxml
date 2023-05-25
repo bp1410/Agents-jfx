@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="768.0" prefWidth="1024.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1">
+   <top>
+      <HBox prefHeight="100.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+         <children>
+            <VBox prefHeight="200.0" prefWidth="100.0" HBox.hgrow="ALWAYS">
+               <children>
+                  <Label text="Num agents N" />
+                  <Slider showTickLabels="true" showTickMarks="true" />
+                  <Label text="Num strategic S" />
+                  <Slider showTickLabels="true" showTickMarks="true" />
+                  <Label layoutX="10.0" layoutY="41.0" text="Num cycles" />
+                  <Slider layoutX="10.0" layoutY="58.0" showTickLabels="true" showTickMarks="true" />
+               </children>
+            </VBox>
+            <VBox layoutX="10.0" layoutY="10.0" prefHeight="200.0" prefWidth="100.0" HBox.hgrow="ALWAYS">
+               <children>
+                  <Label text="Service providers min k_min" />
+                  <Slider showTickLabels="true" showTickMarks="true" />
+                  <Label text="Service providers k_max" />
+                  <Slider showTickLabels="true" showTickMarks="true" />
+               </children>
+            </VBox>
+            <VBox layoutX="10.0" layoutY="10.0" prefHeight="200.0" prefWidth="100.0" HBox.hgrow="ALWAYS">
+               <children>
+                  <Label text="Service measure expoA" />
+                  <Slider showTickLabels="true" showTickMarks="true" />
+                  <Label text="Receive measure expoG" />
+                  <Slider showTickLabels="true" showTickMarks="true" />
+                  <Label layoutX="10.0" layoutY="41.0" text="Initial trust measure V_0" />
+                  <Slider layoutX="10.0" layoutY="58.0" showTickLabels="true" showTickMarks="true" />
+               </children>
+            </VBox>
+            <VBox layoutX="10.0" layoutY="10.0" prefHeight="200.0" prefWidth="100.0" HBox.hgrow="ALWAYS">
+               <children>
+                  <Label text="Honest policy x" />
+                  <Slider showTickLabels="true" showTickMarks="true" />
+                  <Label text="Honest policy y" />
+                  <Slider showTickLabels="true" showTickMarks="true" />
+                  <Label layoutX="10.0" layoutY="41.0" text="Strategic policy z" />
+                  <Slider layoutX="10.0" layoutY="58.0" showTickLabels="true" showTickMarks="true" />
+               </children>
+            </VBox>
+         </children>
+      </HBox>
+   </top>
+</BorderPane>
