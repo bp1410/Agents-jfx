@@ -16,7 +16,6 @@ import javafx.stage.Stage
 import jetbrains.datalore.plot.MonolithicCommon
 import jetbrains.datalore.vis.swing.jfx.DefaultPlotPanelJfx
 import org.jetbrains.letsPlot.geom.geomLine
-import org.jetbrains.letsPlot.intern.Plot
 import org.jetbrains.letsPlot.intern.toSpec
 import org.jetbrains.letsPlot.letsPlot
 import java.util.*
@@ -103,7 +102,9 @@ class AgentsApp : Application() {
             val meanVs: Double,
             val meanVh: Double,
             val netOutflow: Double,
-            val disc: BooleanArray
+            val disc: BooleanArray,
+            val sToSCoopNum: Int,
+            val counterAllCoop: Int
         )
 
         class Policy {
@@ -136,68 +137,30 @@ class AgentsApp : Application() {
 //        Lets-Plot itself doesn't support incremental updates at the moment so, every time the data is updated a brand new plot object must be created.
 
         fun plot(series: List<Pair<String, List<Double>>>): Unit {
+//            for ((name, values) in series) {
+//                println("Name: $name")
+//                println("Values: $values")
+//                println()
+//            }
 
 //            // Make sure JavaFX event thread won't get killed after JFXPanel is destroyed.
 //            Platform.setImplicitExit(false)
 
-//            // Density plot
-//            val rand = java.util.Random()
-//            val n = 200
-//            val data = mapOf<String, Any>(
-//                "x" to List(n) { rand.nextGaussian() }
-//            )
             val numSeries = series.size
             val n = series[0].second.size
-
-//            var data = mapOf(
-//                "cycle" to (1..n).toList() + (1..n).toList(),
-//                "y" to series1 + series2,
-//                "Data" to List(n){"A"} + List(n){"B"}
-//            }
-
-//            val data = mutableMapOf<String, Any>()
-//            data["cycle"] = (1..n).toList().repeat(numSeries)
-//            data["Data"] = List(n) { index -> series[index / n].first }
-//            data["y"] = series.flatMap { it.second }
-
             val data = mutableMapOf<String, Any>()
-            data["cycle"] = (1..n).toList().flatMap { List(numSeries) { it } }
+            data["cycle"] = List(numSeries) { (1 .. n).toList() }.flatten()
             data["Data"] = series.flatMap { (name, _) -> List(n) { name } }
             data["y"] = series.flatMap { (_, values) -> values }
-
-////
-//            val plot = letsPlot(data) +
-//                    geomLine(color = "blue", showLegend = true) { x = "cycle"; y = "y1"} +
-//                    geomLine(color = "red") { x = "cycle"; y = "y2" } +
-//                    scaleColorContinuous("s1")
-//
-//            val rand = java.util.Random()
-//            val data = mapOf(
-//                "rating" to List(200) { rand.nextGaussian() } + List(200) { rand.nextGaussian() * 1.5 + 1.5 },
-//                "cond" to List(200) { "A" } + List(200) { "B" }
-//            )
-
-//            val data = mapOf(
-//                "supp" to listOf("OJ", "OJ", "OJ", "VC", "VC", "VC"),
-//                "dose" to listOf(0.5, 1.0, 2.0, 0.5, 1.0, 2.0),
-//                "length" to listOf(13.23, 22.70, 26.06, 7.98, 16.77, 26.14),
-//                "len_min" to listOf(11.83, 21.2, 24.50, 4.24, 15.26, 23.35),
-//                "len_max" to listOf(15.63, 24.9, 27.11, 10.72, 19.28, 28.93)
-//            )
+//            for ((key, value) in data) {
+//                println("Key: $key, Value: $value")
+//            }
 
             val plot = letsPlot(data){x="cycle"; color="Data"} +
                     geomLine{y = "y"}
 
-//            val plot = letsPlot(data) {x="dose"; color="supp"} +
-//                    geomLine {y="length"}
-
-//
-//            var p = letsPlot(data)
-//            p += geomDensity(color = "dark_green", alpha = .3) { x = "rating"; fill = "cond" }
-
             val rawSpec = plot.toSpec()
             val processedSpec = MonolithicCommon.processRawSpecs(rawSpec, frontendOnly = false)
-
             val plotSwingPanel = DefaultPlotPanelJfx(
                 processedSpec = processedSpec,
                 preserveAspectRatio = false,
@@ -208,36 +171,9 @@ class AgentsApp : Application() {
                     println("[Example App] $message")
                 }
             }
-
             Platform.runLater {
                 val swingNode = SwingNode()
                 swingNode.content = plotSwingPanel
-
-                root.center = swingNode
-            }
-
-
-        }
-
-        fun plotShow(plot: Plot){
-            val rawSpec = plot.toSpec()
-            val processedSpec = MonolithicCommon.processRawSpecs(rawSpec, frontendOnly = false)
-
-            val plotSwingPanel = DefaultPlotPanelJfx(
-                processedSpec = processedSpec,
-                preserveAspectRatio = false,
-                preferredSizeFromPlot = false,
-                repaintDelay = 10,
-            ) { messages ->
-                for (message in messages) {
-                    println("[Example App] $message")
-                }
-            }
-
-            Platform.runLater {
-                val swingNode = SwingNode()
-                swingNode.content = plotSwingPanel
-
                 root.center = swingNode
             }
         }
@@ -248,9 +184,16 @@ class AgentsApp : Application() {
             thread {
                 repeat(params.NC) { cycle ->
                     println("Cycle: $cycle")
+                    var sumPHToS = .0 // sum of honest providers policy for its strategic clients
+                    var numberHJS = 0 // number of strategic clients of honest providers
+                    var sumPSToH = .0 // sum of honest providers policy for its strategic clients
+                    var numberSJH = 0 // number of honest clients of strategic providers
+                    var counterSSCoop = 0
+                    var counterAllCoop = 0
                     // Client - provider pairs
                     val adj = Array(params.N) {IntArray(params.N)}
                     repeat(params.N){ i -> // providers
+                        var countC = 0
                         val clients = random.nextInt(params.KMin, params.KMax+1)
                         var inJ = 0
                         var rn = 0
@@ -258,6 +201,16 @@ class AgentsApp : Application() {
                             rn = random.nextInt(0, params.N)
                             if(rn!=i && adj[i][rn]!=1){
                                 adj[i][rn] = 1
+                                if(params.sAgent!![i]==1){ // provider is strategic
+                                    if(params.sAgent!![rn]!=1){ // client is honest
+                                        numberSJH += 1
+                                    }
+                                }
+                                else{ // provider is honest
+                                    if(params.sAgent!![rn]==1){ // client is strategic
+                                        numberHJS += 1
+                                    }
+                                }
                                 inJ += 1
                             }
                         }
@@ -274,12 +227,25 @@ class AgentsApp : Application() {
                                 val vRepo = if (cycle == 0) params.V0 else data[cycle-1].V[j] // Vj
                                 var L = hStep(vRepo, params.X) // L(Vj,x)
                                 var p = if(params.sAgent!![it]==1) sBiasP(params.Y, L) else L // pij
-                                if(params.sAgent!![it]==1 && params.sAgent!![j]==1) p = 1.0
+                                if(params.sAgent!![it]==1 && params.sAgent!![j]==1) p = 1.0 // s-agents cooperation
                                 val policyP = providerPolicy(randExpoD(params.ExpoA), p) // Pij
                                 L = hStep(vProv, params.X) // L(Vi,x)
-                                val r = if(params.sAgent!![j]==1) sBiasR(params.Z, L) else L // rij
+                                var r = if(params.sAgent!![j]==1) sBiasR(params.Z, L) else L // rij
+                                if(params.sAgent!![it]==1 && params.sAgent!![j]==1) r = 1.0 // s-agents cooperation
                                 val policyR = reporterPolicy(randExpoD(params.ExpoG), policyP, r) // Rij
                                 meanPolicyR += policyR*vProv
+                                if(params.sAgent!![it]==1 && params.sAgent!![j]==1) counterSSCoop += 1 // debug
+                                counterAllCoop += 1 // debug
+                                if(params.sAgent!![it]==1){ // provider is strategic
+                                    if(params.sAgent!![j]!=1){ // client is honest
+                                        sumPSToH += policyP
+                                    }
+                                }
+                                else{ // provider is honest
+                                    if(params.sAgent!![j]==1){ // client is strategic
+                                        sumPHToS += policyP
+                                    }
+                                }
                             }
                         }
                         meanPolicyR /= numClients // Provider reputation
@@ -335,29 +301,24 @@ class AgentsApp : Application() {
                     }
                     meanVh /= params.N-params.S
                     meanVs /= params.S
-                    val netOutflow = (meanVs + meanVh) / 2
-                    data += Cycle(V, meanVs, meanVh, netOutflow, BooleanArray(params.N))
+
+                    val netOutflow = sumPHToS/numberHJS - sumPSToH/numberSJH
+                    println("counterSSCoop: $counterSSCoop/$counterAllCoop, netOutflow: ${String.format("%.2f",netOutflow)}" +
+                            ", sumPHToS: ${String.format("%.2f",sumPHToS)}, numberHJS: $numberHJS" +
+                            ", sumPSToH: ${String.format("%.2f",sumPSToH)}, numberSJH: $numberSJH")
+
+                    data += Cycle(V, meanVs, meanVh, netOutflow, BooleanArray(params.N), counterSSCoop, counterAllCoop)
                     println("meanRHigherSet: ${String.format("%.2f",meanRHigherSet)}, meanRLowerSet: ${String.format("%.2f",meanRLowerSet)}")
                     println("meanVs: ${String.format("%.2f",meanVs)}, meanVh: ${String.format("%.2f",meanVh)}")
                     Thread.sleep(10)
                     progressFun((cycle+1).toDouble()/params.NC*100)
                 }
-                var series1: List<Double> = data.map {cycle->
-                    cycle.meanVh
-                }
-                var series2: List<Double> = data.map {cycle->
-                    cycle.meanVs
-                }
-                var series3: List<Double> = data.map {cycle->
-                    cycle.netOutflow
-                }
 
                 val series = listOf(
-                    Pair("meanVh", series1),
-                    Pair("meanVs", series2),
-                    Pair("netOutflow", series3)
+                    Pair("meanVh", data.map {cycle->cycle.meanVh}),
+                    Pair("meanVs", data.map {cycle->cycle.meanVs}),
+                    Pair("netOutflow", data.map {cycle->cycle.netOutflow})
                 )
-
                 plot(series)
                 returnFun()
             }
