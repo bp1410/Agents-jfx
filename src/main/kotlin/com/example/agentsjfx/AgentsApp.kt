@@ -1,5 +1,6 @@
 package com.example.agentsjfx
 
+import com.example.agentsjfx.AgentsApp.Companion.KMeans.Companion.cluster
 import com.example.agentsjfx.AgentsApp.Companion.Policy.Companion.hStep
 import com.example.agentsjfx.AgentsApp.Companion.Policy.Companion.providerPolicy
 import com.example.agentsjfx.AgentsApp.Companion.Policy.Companion.randExpoD
@@ -15,6 +16,11 @@ import javafx.scene.layout.BorderPane
 import javafx.stage.Stage
 import jetbrains.datalore.plot.MonolithicCommon
 import jetbrains.datalore.vis.swing.jfx.DefaultPlotPanelJfx
+import org.apache.commons.math3.ml.clustering.CentroidCluster
+import org.apache.commons.math3.ml.clustering.DoublePoint
+import org.apache.commons.math3.ml.clustering.KMeansPlusPlusClusterer
+import org.apache.commons.math3.ml.distance.DistanceMeasure
+import org.apache.commons.math3.ml.distance.EuclideanDistance
 import org.jetbrains.letsPlot.geom.geomLine
 import org.jetbrains.letsPlot.intern.toSpec
 import org.jetbrains.letsPlot.letsPlot
@@ -136,6 +142,21 @@ var random = MersenneTwister(100)
                     return Math.pow(random.nextDouble(), 1.0/expo)
                 }
 
+            }
+        }
+
+        class KMeans{
+            companion object {
+                val distanceMeasure: DistanceMeasure = DistanceMeasure { a, b ->
+                    EuclideanDistance().compute(doubleArrayOf(a[0]), doubleArrayOf(b[0]))
+                }
+                val clusterer: KMeansPlusPlusClusterer<DoublePoint> = KMeansPlusPlusClusterer(2, 999, distanceMeasure )
+                fun cluster(map: MutableMap<Int, Double>):List<CentroidCluster<DoublePoint>>{
+                    val dataPoints = map.entries.map { (index, value) ->
+                        DoublePoint( doubleArrayOf(value, index.toDouble()))
+                    }
+                    return clusterer.cluster(dataPoints)
+                }
             }
         }
 
@@ -295,42 +316,42 @@ var random = MersenneTwister(100)
 
                     // Reputation aggregation
                     // TODO Clustering
-                    val sortedByR = agentsR.toList().sortedBy { it.second }.toMap() // order by R
-//                    sortedByR.values.forEach {print("%.2f ".format(it))}
-//                    println()
-//                    sortedByR.keys.forEach {print("$it ")}
-//                    println()
-                    // two even sets
+                    val clusters = cluster(agentsR)
+
                     var meanRHigherSet = .0
                     var meanRLowerSet = .0
-                    var iter = 0
-                    sortedByR.values.forEach{
-                        if(iter<sortedByR.size/2) {
-                            meanRLowerSet += it
-                        }
-                        else{
-                            meanRHigherSet += it
-                        }
-                        iter++
+                    for(point in clusters[0].points){
+                        meanRHigherSet += point.point[0]
                     }
-                    meanRHigherSet /= sortedByR.size/2
-                    meanRLowerSet /= sortedByR.size/2
+                    meanRHigherSet /= clusters[0].points.size
+
+                    for(point in clusters[1].points){
+                        meanRLowerSet += point.point[0]
+                    }
+                    meanRLowerSet /= clusters[1].points.size
+
+                    var swap = false
+                    if(meanRLowerSet>meanRHigherSet){
+                        swap = true
+                        val tmp = meanRHigherSet
+                        meanRHigherSet = meanRLowerSet
+                        meanRLowerSet = tmp
+                    }
+
                     println("meanRHigherSet: ${String.format("%.2f",meanRHigherSet)}, meanRLowerSet: ${String.format("%.2f",meanRLowerSet)}")
+
                     // normalization (0,higher) -> (0,1)
                     meanRLowerSet /= meanRHigherSet
                     meanRHigherSet /= meanRHigherSet
                     // Trust measure
                     var V = DoubleArray(params.N)
-                    iter = 0
-                    sortedByR.keys.forEach{
-                        if(iter<sortedByR.size/2) {
-                            V[it] = meanRLowerSet
-                        }
-                        else{
-                            V[it] = meanRHigherSet
-                        }
-                        iter++
+                    for(point in clusters[0].points){
+                        V[point.point[1].toInt()] = if(swap) meanRLowerSet else meanRHigherSet
                     }
+                    for(point in clusters[1].points){
+                        V[point.point[1].toInt()] = if(swap) meanRHigherSet else meanRLowerSet
+                    }
+
                     var meanVs = 0.0
                     var meanVh = 0.0
                     repeat(params.N){

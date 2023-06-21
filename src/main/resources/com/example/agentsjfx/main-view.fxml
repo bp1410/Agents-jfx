@@ -66,11 +66,11 @@
                         <VBox prefHeight="200.0" prefWidth="100.0" style="-fx-spacing: 10px;" HBox.hgrow="ALWAYS">
                            <children>
                               <Label text="Pair selection" />
-                              <RadioButton mnemonicParsing="false" selected="true" text="Find clients for providers">
+                              <RadioButton mnemonicParsing="false" text="Find clients for providers">
                                  <toggleGroup>
                                     <ToggleGroup fx:id="pairSelection" />
                                  </toggleGroup></RadioButton>
-                              <RadioButton mnemonicParsing="false" text="Find providers for clients" toggleGroup="$pairSelection" />
+                              <RadioButton mnemonicParsing="false" selected="true" text="Find providers for clients" toggleGroup="$pairSelection" />
                            </children>
                         </VBox>
                         <VBox layoutX="10.0" layoutY="10.0" prefHeight="200.0" prefWidth="100.0" HBox.hgrow="ALWAYS">
