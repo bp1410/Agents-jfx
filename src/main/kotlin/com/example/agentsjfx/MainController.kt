@@ -2,8 +2,11 @@ package com.example.agentsjfx
 
 import javafx.fxml.FXML
 import javafx.scene.control.Button
+import javafx.scene.control.CheckBox
 import javafx.scene.control.Label
+import javafx.scene.control.RadioButton
 import javafx.scene.control.Slider
+import javafx.scene.control.ToggleGroup
 
 class MainController {
     @FXML
@@ -52,6 +55,11 @@ class MainController {
     private lateinit var ly: Label
     @FXML
     private lateinit var lz: Label
+    // Misc
+    @FXML
+    private lateinit var pairSelection: ToggleGroup
+    @FXML
+    private lateinit var symmetricalModel: CheckBox
 
     fun initialize(){
         ln.text = "Num agents N = ${sliderN.value}"
@@ -70,45 +78,55 @@ class MainController {
                 sliderN.value.toInt(), sliderS.value.toInt(), sliderNC.value.toInt(),
                 sliderKMin.value.toInt(),sliderKMax.value.toInt(),
                 sliderExpoA.value,sliderExpoG.value,sliderV0.value,sliderX.value,sliderY.value,sliderZ.value, null)
-            AgentsApp.startSimulation(params, { progress ->
+            val miscParams = AgentsApp.Companion.MiscParams(
+                    pairSelection.selectedToggle.equals("Find clients for providers"),
+                    symmetricalModel.isSelected
+            )
+            AgentsApp.startSimulation(params, miscParams, { progress ->
                 println("${"%.2f".format(progress)}")
             })
             {
                 println("completed")
             }
         }
-        sliderN.valueProperty().addListener { _, oldValue, newValue ->
+        sliderN.valueProperty().addListener { _, _, newValue ->
             ln.text = "Num agents N = $newValue"
         }
-        sliderS.valueProperty().addListener { _, oldValue, newValue ->
+        sliderS.valueProperty().addListener { _, _, newValue ->
             ls.text = "Num strategic S = $newValue"
         }
-        sliderNC.valueProperty().addListener { _, oldValue, newValue ->
+        sliderNC.valueProperty().addListener { _, _, newValue ->
             lnc.text = "Num cycles = $newValue"
         }
-        sliderKMax.valueProperty().addListener { _, oldValue, newValue ->
+        sliderKMax.valueProperty().addListener { _, _, newValue ->
             lkmax.text = "Service providers max k_max = $newValue"
         }
-        sliderKMin.valueProperty().addListener { _, oldValue, newValue ->
+        sliderKMin.valueProperty().addListener { _, _, newValue ->
             lkmin.text = "Service providers min k_min = $newValue"
         }
-        sliderV0.valueProperty().addListener { _, oldValue, newValue ->
+        sliderV0.valueProperty().addListener { _, _, newValue ->
             lv0.text = "Initial trust measure V_0 = $newValue"
         }
-        sliderExpoA.valueProperty().addListener { _, oldValue, newValue ->
+        sliderExpoA.valueProperty().addListener { _, _, newValue ->
             lea.text = "Service measure expoA = $newValue"
         }
-        sliderExpoG.valueProperty().addListener { _, oldValue, newValue ->
+        sliderExpoG.valueProperty().addListener { _, _, newValue ->
             leg.text = "Service measure expoG = $newValue"
         }
-        sliderX.valueProperty().addListener { _, oldValue, newValue ->
+        sliderX.valueProperty().addListener { _, _, newValue ->
             lx.text = "Honest policy x = $newValue"
         }
-        sliderY.valueProperty().addListener { _, oldValue, newValue ->
+        sliderY.valueProperty().addListener { _, _, newValue ->
             ly.text = "Strategic policy y = $newValue"
         }
-        sliderZ.valueProperty().addListener { _, oldValue, newValue ->
+        sliderZ.valueProperty().addListener { _, _, newValue ->
             lz.text = "Strategic policy z = $newValue"
+        }
+        pairSelection.selectedToggleProperty().addListener{ _, _, newToggle ->
+            val selectedRadioButton = newToggle as? RadioButton
+            selectedRadioButton?.let {
+                println("Selected radio button: ${it.text}")
+            }
         }
     }
 

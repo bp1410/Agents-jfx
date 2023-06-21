@@ -5,54 +5,90 @@
 
 <BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="768.0" prefWidth="1024.0" style="-fx-padding: 3px;" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.agentsjfx.MainController">
    <top>
-      <HBox prefHeight="100.0" prefWidth="200.0" style="-fx-border-color: black; -fx-border-width: 2px; -fx-border-radius: 10px; -fx-padding: 10px; -fx-spacing: 10px;" BorderPane.alignment="CENTER">
-         <children>
-            <VBox prefHeight="200.0" prefWidth="100.0" style="-fx-spacing: 0px;" HBox.hgrow="ALWAYS">
-               <children>
-                  <Label fx:id="ln" text="Num agents N" />
-                  <Slider id="sliderN" fx:id="sliderN" blockIncrement="100.0" majorTickUnit="100.0" max="1000.0" min="500.0" minorTickCount="0" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="100.0" />
-                  <Label fx:id="ls" text="Num strategic S" />
-                  <Slider id="sliderS" fx:id="sliderS" blockIncrement="200.0" majorTickUnit="200.0" max="450.0" min="50.0" minorTickCount="0" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="50.0" />
-                  <Label fx:id="lnc" layoutX="10.0" layoutY="41.0" text="Num cycles" />
-                  <Slider id="sliderNC" fx:id="sliderNC" layoutX="10.0" layoutY="58.0" majorTickUnit="3.0" min="1.0" minorTickCount="2" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="30.0" />
-               </children>
-            </VBox>
-            <VBox layoutX="10.0" layoutY="10.0" prefHeight="200.0" prefWidth="100.0" HBox.hgrow="ALWAYS">
-               <children>
-                  <Label fx:id="lkmin" text="Service providers min k_min" />
-                  <Slider id="sliderKMin" fx:id="sliderKMin" majorTickUnit="50.0" max="150.0" min="50.0" minorTickCount="0" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="50.0" />
-                  <Label fx:id="lkmax" text="Service providers k_max" />
-                  <Slider id="sliderKMax" fx:id="sliderKMax" majorTickUnit="50.0" max="150.0" min="50.0" minorTickCount="0" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="100.0" />
-                  <Separator prefWidth="200.0" />
-                  <HBox prefHeight="100.0" prefWidth="200.0" style="-fx-alignment: center;">
-                     <children>
-                        <Button id="buttonSS" fx:id="buttonSS" mnemonicParsing="false" text="Start simulation" />
-                     </children>
-                  </HBox>
-               </children>
-            </VBox>
-            <VBox layoutX="10.0" layoutY="10.0" prefHeight="200.0" prefWidth="100.0" HBox.hgrow="ALWAYS">
-               <children>
-                  <Label fx:id="lea" text="Service measure expoA" />
-                  <Slider id="sliderExpoA" fx:id="sliderExpoA" blockIncrement="0.5" majorTickUnit="1.0" max="10.0" min="0.5" minorTickCount="1" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="10.0" />
-                  <Label fx:id="leg" text="Receive measure expoG" />
-                  <Slider id="sliderExpoG" fx:id="sliderExpoG" blockIncrement="0.5" majorTickUnit="1.0" max="10.0" min="0.5" minorTickCount="1" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="10.0" />
-                  <Label fx:id="lv0" layoutX="10.0" layoutY="41.0" text="Initial trust measure V_0" />
-                  <Slider id="sliderV0" fx:id="sliderV0" blockIncrement="1.0" layoutX="10.0" layoutY="58.0" majorTickUnit="0.1" max="1.0" min="0.1" minorTickCount="0" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="1.0" />
-               </children>
-            </VBox>
-            <VBox layoutX="10.0" layoutY="10.0" prefHeight="200.0" prefWidth="100.0" HBox.hgrow="ALWAYS">
-               <children>
-                  <Label fx:id="lx" text="Honest policy x" />
-                  <Slider id="sliderX" fx:id="sliderX" blockIncrement="1.0" majorTickUnit="0.1" max="1.0" min="0.1" minorTickCount="0" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="0.8" />
-                  <Label fx:id="ly" text="Strategic policy y" />
-                  <Slider id="sliderY" fx:id="sliderY" blockIncrement="1.0" majorTickUnit="0.1" max="1.0" min="0.1" minorTickCount="0" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="0.8" />
-                  <Label fx:id="lz" layoutX="10.0" layoutY="41.0" text="Strategic policy z" />
-                  <Slider id="sliderZ" fx:id="sliderZ" blockIncrement="1.0" layoutX="10.0" layoutY="58.0" majorTickUnit="0.1" max="1.0" min="0.1" minorTickCount="0" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="0.8" />
-               </children>
-            </VBox>
-         </children>
+      <TabPane prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE" BorderPane.alignment="CENTER">
+        <tabs>
+          <Tab text="Task params">
+            <content>
+                <HBox prefHeight="100.0" prefWidth="555.0" style="-fx-padding: 10px; -fx-spacing: 10px;">
+                    <children>
+                        <VBox prefHeight="200.0" prefWidth="100.0" style="-fx-spacing: 0px;" HBox.hgrow="ALWAYS">
+                            <children>
+                                <Label fx:id="ln" text="Num agents N" />
+                                <Slider id="sliderN" fx:id="sliderN" blockIncrement="100.0" majorTickUnit="100.0" max="1000.0" min="500.0" minorTickCount="0" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="100.0" />
+                                <Label fx:id="ls" text="Num strategic S" />
+                                <Slider id="sliderS" fx:id="sliderS" blockIncrement="200.0" majorTickUnit="200.0" max="450.0" min="50.0" minorTickCount="0" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="50.0" />
+                                <Label fx:id="lnc" layoutX="10.0" layoutY="41.0" text="Num cycles" />
+                                <Slider id="sliderNC" fx:id="sliderNC" layoutX="10.0" layoutY="58.0" majorTickUnit="3.0" min="1.0" minorTickCount="2" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="30.0" />
+                            </children>
+                        </VBox>
+                        <VBox layoutX="10.0" layoutY="10.0" prefHeight="200.0" prefWidth="100.0" HBox.hgrow="ALWAYS">
+                            <children>
+                                <Label fx:id="lkmin" text="Service providers min k_min" />
+                                <Slider id="sliderKMin" fx:id="sliderKMin" majorTickUnit="50.0" max="150.0" min="50.0" minorTickCount="0" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="50.0" />
+                                <Label fx:id="lkmax" text="Service providers k_max" />
+                                <Slider id="sliderKMax" fx:id="sliderKMax" majorTickUnit="50.0" max="150.0" min="50.0" minorTickCount="0" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="100.0" />
+                                <Separator prefWidth="200.0" />
+                                <HBox prefHeight="100.0" prefWidth="200.0" style="-fx-alignment: center;">
+                                    <children>
+                                        <Button id="buttonSS" fx:id="buttonSS" mnemonicParsing="false" text="Start simulation" />
+                                    </children>
+                                </HBox>
+                            </children>
+                        </VBox>
+                        <VBox layoutX="10.0" layoutY="10.0" prefHeight="200.0" prefWidth="100.0" HBox.hgrow="ALWAYS">
+                            <children>
+                                <Label fx:id="lea" text="Service measure expoA" />
+                                <Slider id="sliderExpoA" fx:id="sliderExpoA" blockIncrement="0.5" majorTickUnit="1.0" max="10.0" min="0.5" minorTickCount="1" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="10.0" />
+                                <Label fx:id="leg" text="Receive measure expoG" />
+                                <Slider id="sliderExpoG" fx:id="sliderExpoG" blockIncrement="0.5" majorTickUnit="1.0" max="10.0" min="0.5" minorTickCount="1" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="10.0" />
+                                <Label fx:id="lv0" layoutX="10.0" layoutY="41.0" text="Initial trust measure V_0" />
+                                <Slider id="sliderV0" fx:id="sliderV0" blockIncrement="1.0" layoutX="10.0" layoutY="58.0" majorTickUnit="0.1" max="1.0" min="0.1" minorTickCount="0" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="1.0" />
+                            </children>
+                        </VBox>
+                        <VBox layoutX="10.0" layoutY="10.0" prefHeight="200.0" prefWidth="100.0" HBox.hgrow="ALWAYS">
+                            <children>
+                                <Label fx:id="lx" text="Honest policy x" />
+                                <Slider id="sliderX" fx:id="sliderX" blockIncrement="1.0" majorTickUnit="0.1" max="1.0" min="0.1" minorTickCount="0" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="0.8" />
+                                <Label fx:id="ly" text="Strategic policy y" />
+                                <Slider id="sliderY" fx:id="sliderY" blockIncrement="1.0" majorTickUnit="0.1" max="1.0" min="0.1" minorTickCount="0" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="0.8" />
+                                <Label fx:id="lz" layoutX="10.0" layoutY="41.0" text="Strategic policy z" />
+                                <Slider id="sliderZ" fx:id="sliderZ" blockIncrement="1.0" layoutX="10.0" layoutY="58.0" majorTickUnit="0.1" max="1.0" min="0.1" minorTickCount="0" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="0.8" />
+                            </children>
+                        </VBox>
+                    </children>
+                </HBox>
+            </content>
+           </Tab>
+          <Tab text="Misc params">
+            <content>
+                <HBox prefHeight="100.0" prefWidth="555.0" style="-fx-padding: 10px; -fx-spacing: 10px;">
+                    <children>
+                        <VBox prefHeight="200.0" prefWidth="100.0" style="-fx-spacing: 10px;" HBox.hgrow="ALWAYS">
+                           <children>
+                              <Label text="Pair selection" />
+                              <RadioButton mnemonicParsing="false" selected="true" text="Find clients for providers">
+                                 <toggleGroup>
+                                    <ToggleGroup fx:id="pairSelection" />
+                                 </toggleGroup></RadioButton>
+                              <RadioButton mnemonicParsing="false" text="Find providers for clients" toggleGroup="$pairSelection" />
+                           </children>
+                        </VBox>
+                        <VBox layoutX="10.0" layoutY="10.0" prefHeight="200.0" prefWidth="100.0" HBox.hgrow="ALWAYS">
+                           <children>
+                              <CheckBox fx:id="symmetricalModel" mnemonicParsing="false" text="Symmetrical model" />
+                           </children>
+                        </VBox>
+                        <VBox layoutX="10.0" layoutY="10.0" prefHeight="200.0" prefWidth="100.0" HBox.hgrow="ALWAYS" />
+                        <VBox layoutX="10.0" layoutY="10.0" prefHeight="200.0" prefWidth="100.0" HBox.hgrow="ALWAYS">
+                            <children>
 
-      </HBox>
+                            </children>
+                        </VBox>
+                    </children>
+                </HBox>
+            </content>
+          </Tab>
+        </tabs>
+      </TabPane>
    </top>
 </BorderPane>

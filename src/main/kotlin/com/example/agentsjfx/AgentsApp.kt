@@ -18,9 +18,11 @@ import jetbrains.datalore.vis.swing.jfx.DefaultPlotPanelJfx
 import org.jetbrains.letsPlot.geom.geomLine
 import org.jetbrains.letsPlot.intern.toSpec
 import org.jetbrains.letsPlot.letsPlot
-import java.util.*
 import kotlin.concurrent.thread
-import kotlin.random.Random
+import org.apache.commons.math3.random.MersenneTwister
+import java.util.*
+import kotlin.math.round
+import kotlin.math.roundToInt
 
 
 class AgentsApp : Application() {
@@ -51,7 +53,8 @@ class AgentsApp : Application() {
         val root = fxmlLoader.load<BorderPane>()
 
         val data = LinkedList<Cycle>()
-        val random = Random(100)
+//        val random = Random(100)
+var random = MersenneTwister(100)
         class Params(
             val N: Int,
             val S: Int,
@@ -96,6 +99,11 @@ class AgentsApp : Application() {
                         "Z=${"%.2f".format(Z)})"
             }
         }
+
+        class MiscParams(
+                val findClients: Boolean,   // false - Find providers for clients, true - Find clients for providers
+                val symmetricalModel: Boolean
+        )
 
         class Cycle(
             val V: DoubleArray,
@@ -178,9 +186,10 @@ class AgentsApp : Application() {
             }
         }
 
-        fun startSimulation(params: Params, progressFun: (Double) -> Unit, returnFun: () -> Unit){
+        fun startSimulation(params: Params, misc: MiscParams, progressFun: (Double) -> Unit, returnFun: () -> Unit){
             data.clear()
             println(params.toString())
+            random = MersenneTwister(100)
             thread {
                 repeat(params.NC) { cycle ->
                     println("Cycle: $cycle")
@@ -192,31 +201,58 @@ class AgentsApp : Application() {
                     var counterAllCoop = 0
                     // Client - provider pairs
                     val adj = Array(params.N) {IntArray(params.N)}
-                    repeat(params.N){ i -> // providers
-                        var countC = 0
-                        val clients = random.nextInt(params.KMin, params.KMax+1)
-                        var inJ = 0
-                        var rn = 0
-                        while(inJ < clients){
-                            rn = random.nextInt(0, params.N)
-                            if(rn!=i && adj[i][rn]!=1){
-                                adj[i][rn] = 1
-                                if(params.sAgent!![i]==1){ // provider is strategic
-                                    if(params.sAgent!![rn]!=1){ // client is honest
-                                        numberSJH += 1
+                    if(misc.findClients) {
+                        repeat(params.N) { i -> // providers - misc.findClients
+                            val numClients = random.nextInt(params.KMin, params.KMax + 1)
+                            var inJ = 0
+                            var rn = 0
+                            while (inJ < numClients) {
+                                rn = random.nextInt(0, params.N)
+                                if (rn != i && adj[i][rn] != 1) {
+                                    adj[i][rn] = 1
+                                    if (params.sAgent!![i] == 1) { // provider is strategic
+                                        if (params.sAgent!![rn] != 1) { // client is honest
+                                            numberSJH += 1
+                                        }
+                                    } else { // provider is honest
+                                        if (params.sAgent!![rn] == 1) { // client is strategic
+                                            numberHJS += 1
+                                        }
                                     }
+                                    inJ += 1
                                 }
-                                else{ // provider is honest
-                                    if(params.sAgent!![rn]==1){ // client is strategic
-                                        numberHJS += 1
+                            }
+                        }
+                    }
+                    else {
+                        repeat(params.N) { i -> // clients - !misc.findClients
+                            val numProviders = random.nextInt(params.KMin, params.KMax + 1)
+                            var inJ = 0
+                            var rn = 0
+                            while (inJ < numProviders) {
+                                rn = random.nextInt(0, params.N)
+                                if (rn != i && adj[rn][i] != 1) {
+                                    adj[rn][i] = 1
+                                    if (params.sAgent!![i] == 1) { // client is strategic
+                                        if (params.sAgent!![rn] != 1) { // provider is honest
+                                            numberHJS += 1
+                                        }
+                                    } else { // client is honest
+                                        if (params.sAgent!![rn] == 1) { // provider is strategic
+                                            numberSJH += 1
+                                        }
                                     }
+                                    inJ += 1
                                 }
-                                inJ += 1
                             }
                         }
                     }
                     // Agents policy
                     var agentsR: MutableMap<Int, Double> = mutableMapOf()
+                    var symmetricAH = randExpoD(params.ExpoA)
+                    var symmetricAS = randExpoD(params.ExpoA)
+                    var symmetricGH = randExpoD(params.ExpoG)
+                    var symmetricGS = randExpoD(params.ExpoG)
                     repeat(params.N) {
                         val clients = adj[it]
                         val vProv = if (cycle == 0) params.V0 else data[cycle-1].V[it] // Vi
@@ -228,11 +264,15 @@ class AgentsApp : Application() {
                                 var L = hStep(vRepo, params.X) // L(Vj,x)
                                 var p = if(params.sAgent!![it]==1) sBiasP(params.Y, L) else L // pij
                                 if(params.sAgent!![it]==1 && params.sAgent!![j]==1) p = 1.0 // s-agents cooperation
-                                val policyP = providerPolicy(randExpoD(params.ExpoA), p) // Pij
+                                val policyP = if (misc.symmetricalModel)
+                                    if (params.sAgent!![it]==1) providerPolicy(symmetricAS, p) else providerPolicy(symmetricAH, p)
+                                    else providerPolicy(randExpoD(params.ExpoA), p) // Pij
                                 L = hStep(vProv, params.X) // L(Vi,x)
                                 var r = if(params.sAgent!![j]==1) sBiasR(params.Z, L) else L // rij
                                 if(params.sAgent!![it]==1 && params.sAgent!![j]==1) r = 1.0 // s-agents cooperation
-                                val policyR = reporterPolicy(randExpoD(params.ExpoG), policyP, r) // Rij
+                                val policyR = if (misc.symmetricalModel)
+                                    if (params.sAgent!![it]==1) providerPolicy(symmetricGS, p) else providerPolicy(symmetricGH, p)
+                                    else reporterPolicy(randExpoD(params.ExpoG), policyP, r) // Rij
                                 meanPolicyR += policyR*vProv
                                 if(params.sAgent!![it]==1 && params.sAgent!![j]==1) counterSSCoop += 1 // debug
                                 counterAllCoop += 1 // debug
@@ -251,6 +291,8 @@ class AgentsApp : Application() {
                         meanPolicyR /= numClients // Provider reputation
                         agentsR[it] = meanPolicyR
                     }
+
+
                     // Reputation aggregation
                     // TODO Clustering
                     val sortedByR = agentsR.toList().sortedBy { it.second }.toMap() // order by R
@@ -325,6 +367,11 @@ class AgentsApp : Application() {
         }
     }
 
+}
+
+private fun MersenneTwister.nextInt(from: Int, until: Int): Int {
+    require(from < until){"Invalid range: a ($from) is greater than b ($until)"}
+    return (this.nextDouble()*(until-from-1) + from).roundToInt()
 }
 
 fun main() {

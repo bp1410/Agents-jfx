@@ -42,6 +42,7 @@ javafx {
 def letsPlotVersion = '3.2.0-rc1'
 def letsPlotKotlinVersion = '4.4.1'
 def slf4jVersion = '2.0.7'
+def math3Version = '3.6.1'
 
 dependencies {
 //  testImplementation("org.junit.jupiter:junit-jupiter-api:${junitVersion}")
@@ -50,6 +51,9 @@ dependencies {
   implementation "org.jetbrains.lets-plot:lets-plot-jfx:$letsPlotVersion"
   implementation "org.jetbrains.lets-plot:lets-plot-kotlin-jvm:$letsPlotKotlinVersion"
   implementation "org.slf4j:slf4j-simple:$slf4jVersion" // Enable logging to console
+  // https://mvnrepository.com/artifact/org.apache.commons/commons-math3
+  implementation "org.apache.commons:commons-math3:$math3Version"
+
 }
 
 test {
