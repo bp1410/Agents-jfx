@@ -26,6 +26,9 @@ import org.jetbrains.letsPlot.intern.toSpec
 import org.jetbrains.letsPlot.letsPlot
 import kotlin.concurrent.thread
 import org.apache.commons.math3.random.MersenneTwister
+import java.io.BufferedWriter
+import java.io.FileWriter
+import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.round
 import kotlin.math.roundToInt
@@ -376,6 +379,19 @@ var random = MersenneTwister(100)
                     Thread.sleep(10)
                     progressFun((cycle+1).toDouble()/params.NC*100)
                 }
+
+                val date = SimpleDateFormat("yyyy-MM-dd_HHmmss", Locale.getDefault()).format(Date())
+                val fileWriter = FileWriter("./out_$date.csv")
+                val bufferedWriter = BufferedWriter(fileWriter)
+                bufferedWriter.write(params.toString())
+                bufferedWriter.newLine()
+                bufferedWriter.write("meanVs;meanVh;netOutflow;")
+                bufferedWriter.newLine()
+                for(cycle in data){
+                    bufferedWriter.write("${cycle.meanVs};${cycle.meanVh};${cycle.netOutflow};")
+                    bufferedWriter.newLine()
+                }
+                bufferedWriter.close()
 
                 val series = listOf(
                     Pair("meanVh", data.map {cycle->cycle.meanVh}),
