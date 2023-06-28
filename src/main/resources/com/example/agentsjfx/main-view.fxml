@@ -78,7 +78,11 @@
                               <CheckBox fx:id="symmetricalModel" mnemonicParsing="false" text="Symmetrical model" />
                            </children>
                         </VBox>
-                        <VBox layoutX="10.0" layoutY="10.0" prefHeight="200.0" prefWidth="100.0" HBox.hgrow="ALWAYS" />
+                        <VBox layoutX="10.0" layoutY="10.0" prefHeight="200.0" prefWidth="100.0" HBox.hgrow="ALWAYS">
+                           <children>
+                              <Button fx:id="generateDistribution" mnemonicParsing="false" text="Generate Distribution" />
+                              <CheckBox fx:id="useCalcDist" mnemonicParsing="false" text="Use calculated distribution" />
+                           </children></VBox>
                         <VBox layoutX="10.0" layoutY="10.0" prefHeight="200.0" prefWidth="100.0" HBox.hgrow="ALWAYS">
                             <children>
 

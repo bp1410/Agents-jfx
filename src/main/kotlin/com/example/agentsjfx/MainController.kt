@@ -60,6 +60,10 @@ class MainController {
     private lateinit var pairSelection: ToggleGroup
     @FXML
     private lateinit var symmetricalModel: CheckBox
+    @FXML
+    private lateinit var generateDistribution: Button
+    @FXML
+    private lateinit var useCalcDist: CheckBox
 
     fun initialize(){
         ln.text = "Num agents N = ${sliderN.value}"
@@ -80,7 +84,8 @@ class MainController {
                 sliderExpoA.value,sliderExpoG.value,sliderV0.value,sliderX.value,sliderY.value,sliderZ.value, null)
             val miscParams = AgentsApp.Companion.MiscParams(
                     pairSelection.selectedToggle.equals("Find clients for providers"),
-                    symmetricalModel.isSelected
+                    symmetricalModel.isSelected,
+                    useCalcDist.isSelected
             )
             AgentsApp.startSimulation(params, miscParams, { progress ->
                 println("${"%.2f".format(progress)}")
@@ -128,6 +133,7 @@ class MainController {
                 println("Selected radio button: ${it.text}")
             }
         }
+        generateDistribution.setOnAction { AgentsApp.calcDistribution() }
     }
 
 }

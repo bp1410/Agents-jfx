@@ -3,6 +3,7 @@ package com.example.agentsjfx
 import com.example.agentsjfx.AgentsApp.Companion.KMeans.Companion.cluster
 import com.example.agentsjfx.AgentsApp.Companion.Policy.Companion.hStep
 import com.example.agentsjfx.AgentsApp.Companion.Policy.Companion.providerPolicy
+import com.example.agentsjfx.AgentsApp.Companion.Policy.Companion.randCalcDist
 import com.example.agentsjfx.AgentsApp.Companion.Policy.Companion.randExpoD
 import com.example.agentsjfx.AgentsApp.Companion.Policy.Companion.reporterPolicy
 import com.example.agentsjfx.AgentsApp.Companion.Policy.Companion.sBiasP
@@ -21,49 +22,33 @@ import org.apache.commons.math3.ml.clustering.DoublePoint
 import org.apache.commons.math3.ml.clustering.KMeansPlusPlusClusterer
 import org.apache.commons.math3.ml.distance.DistanceMeasure
 import org.apache.commons.math3.ml.distance.EuclideanDistance
+import org.apache.commons.math3.random.MersenneTwister
 import org.jetbrains.letsPlot.geom.geomLine
 import org.jetbrains.letsPlot.intern.toSpec
 import org.jetbrains.letsPlot.letsPlot
-import kotlin.concurrent.thread
-import org.apache.commons.math3.random.MersenneTwister
 import java.io.BufferedWriter
+import java.io.File
 import java.io.FileWriter
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.math.round
+import kotlin.concurrent.thread
+import kotlin.math.abs
 import kotlin.math.roundToInt
-
 
 class AgentsApp : Application() {
     
     override fun start(stage: Stage) {
-        stage.title = "Lets-Plot in JavaFX Application Demo"
-
-//        root.children.add(vbox)
-//        root.children.add(swingNode)
+        stage.title = "Agents-jfx"
         stage.scene = Scene(root, 1024.0, 768.0)
-
         stage.show()
-
-//        thread {
-//            Thread.sleep(3000)
-//            Platform.runLater {
-//                val plot = plotSwingPanel
-//            }
-//            Thread.sleep(3000)
-//            Platform.runLater {
-//                root.center = swingNode
-//            }
-//        }
     }
 
     companion object {
         val fxmlLoader = FXMLLoader(AgentsApp::class.java.getResource("main-view.fxml"))
         val root = fxmlLoader.load<BorderPane>()
-
         val data = LinkedList<Cycle>()
-//        val random = Random(100)
-var random = MersenneTwister(100)
+        var random = MersenneTwister(100)
+
         class Params(
             val N: Int,
             val S: Int,
@@ -110,8 +95,9 @@ var random = MersenneTwister(100)
         }
 
         class MiscParams(
-                val findClients: Boolean,   // false - Find providers for clients, true - Find clients for providers
-                val symmetricalModel: Boolean
+            val findClients: Boolean,   // false - Find providers for clients, true - Find clients for providers
+            val symmetricalModel: Boolean,
+            val useCalcDist: Boolean
         )
 
         class Cycle(
@@ -145,6 +131,20 @@ var random = MersenneTwister(100)
                     return Math.pow(random.nextDouble(), 1.0/expo)
                 }
 
+                fun randCalcDist(dist: FloatArray = floatArrayOf(0.008F, 0.043F, 0.1288F, 0.2805F, 0.4871F, 0.694F, 0.8546F, 0.9537F, 0.9898F, 1.0F)): Double{
+                    val number = random.nextDouble()
+                    var ret = .0
+                    dist.forEachIndexed { index, fl ->
+                        if(number<=fl){
+                            ret = (index+1).toDouble()/dist.size.toDouble()
+                            print("#${ret}")
+                            return ret
+                        }
+                    }
+                    print("#${ret}")
+                    return ret
+                }
+
             }
         }
 
@@ -163,18 +163,61 @@ var random = MersenneTwister(100)
             }
         }
 
+        fun calcDistribution(fileName: String = "dataset.csv", columns: IntArray = intArrayOf(0,1,2,3), probabilityIntervals: IntArray = intArrayOf(10,10, 10, 10), linesToSkip: Int = 1): MutableMap<Int, FloatArray>{
+            // load data
+            val file = File(fileName)
+            val lines = file.readLines() // Do not use this function for huge files.
+            val data: MutableMap<Int, FloatArray> = mutableMapOf()
+            val ret: MutableMap<Int, FloatArray> = mutableMapOf()
+            for(c in columns){
+                data[c] = FloatArray(lines.size-linesToSkip)
+
+            }
+            for (i in linesToSkip until lines.size){
+                val values = lines[i].replace(",",".").split(";").map { token -> token.toFloat() }
+                columns.forEach {
+                    data[it]!![i-linesToSkip] = values[it]
+                }
+            }
+            // count distribution
+            for(pi in 0 until probabilityIntervals.size){
+                ret[columns[pi]] = FloatArray(probabilityIntervals[pi])
+            }
+            // all data in column need to have same sign
+            columns.forEach {
+                var max: Float? = data[it]!!.maxOrNull()
+                var min: Float? = data[it]!!.minOrNull()
+                val range = abs(max!! - min!!)
+                if(max <=0 && min <=max){
+                    val tmp = max
+                    max = abs(min)
+                    min = abs(tmp)
+                }
+                var intCounter = 0
+                for(int in 0 until probabilityIntervals[it]){
+                    intCounter = 0
+                    val intervalMax = range / probabilityIntervals[it] * (int+1)
+                    data[it]!!.forEach { x ->
+                        if(abs(x)<=intervalMax+min){
+                            intCounter += 1
+                        }
+                    }
+                    ret[it]!![int] = intCounter.toFloat()
+                }
+                ret[it]!!.forEachIndexed {i, x ->
+                    ret[it]!![i] = x/intCounter.toFloat()
+                }
+            }
+            plotDistribution(ret)
+            return ret
+        }
+
 //        from: https://github.com/alshan/lets-plot-mini-apps/issues/2
 //        alshan commented on Sep 27, 2022
 //        Ho @fmvin , this must be some trick with offscreen drawing of kind. Perhaps CardLayout can help.
 //        Lets-Plot itself doesn't support incremental updates at the moment so, every time the data is updated a brand new plot object must be created.
 
         fun plot(series: List<Pair<String, List<Double>>>): Unit {
-//            for ((name, values) in series) {
-//                println("Name: $name")
-//                println("Values: $values")
-//                println()
-//            }
-
 //            // Make sure JavaFX event thread won't get killed after JFXPanel is destroyed.
 //            Platform.setImplicitExit(false)
 
@@ -184,12 +227,41 @@ var random = MersenneTwister(100)
             data["cycle"] = List(numSeries) { (1 .. n).toList() }.flatten()
             data["Data"] = series.flatMap { (name, _) -> List(n) { name } }
             data["y"] = series.flatMap { (_, values) -> values }
-//            for ((key, value) in data) {
-//                println("Key: $key, Value: $value")
-//            }
 
             val plot = letsPlot(data){x="cycle"; color="Data"} +
                     geomLine{y = "y"}
+
+            val rawSpec = plot.toSpec()
+            val processedSpec = MonolithicCommon.processRawSpecs(rawSpec, frontendOnly = false)
+            val plotSwingPanel = DefaultPlotPanelJfx(
+                processedSpec = processedSpec,
+                preserveAspectRatio = false,
+                preferredSizeFromPlot = false,
+                repaintDelay = 10,
+            ) { messages ->
+                for (message in messages) {
+                    println("[Example App] $message")
+                }
+            }
+            Platform.runLater {
+                val swingNode = SwingNode()
+                swingNode.content = plotSwingPanel
+                root.center = swingNode
+            }
+        }
+
+        fun plotDistribution(dis: MutableMap<Int, FloatArray>): Unit {
+            val n = dis[dis.keys.first()]!!.size
+            var keys = mutableListOf<String>()
+            dis.keys.forEach{k ->
+                keys.addAll(List(n){ k.toString() })
+            }
+            val data = mutableMapOf<String, Any>()
+            data["interval"] = List(dis.keys.size){ (1..n).toList().map { it.toFloat()/n.toFloat() } }.flatten()
+            data["p"] = dis.values.flatMap { it.asList() }.toFloatArray()
+            data["l"] = keys
+
+            val plot = letsPlot(data){ x = "interval" } + geomLine{y = "p"; color = "l"}
 
             val rawSpec = plot.toSpec()
             val processedSpec = MonolithicCommon.processRawSpecs(rawSpec, frontendOnly = false)
@@ -275,8 +347,8 @@ var random = MersenneTwister(100)
                     var agentsR: MutableMap<Int, Double> = mutableMapOf()
                     var symmetricAH = randExpoD(params.ExpoA)
                     var symmetricAS = randExpoD(params.ExpoA)
-                    var symmetricGH = randExpoD(params.ExpoG)
-                    var symmetricGS = randExpoD(params.ExpoG)
+                    var symmetricGH = if(misc.useCalcDist) randCalcDist() else randExpoD(params.ExpoG)
+                    var symmetricGS = if(misc.useCalcDist) randCalcDist() else randExpoD(params.ExpoG)
                     repeat(params.N) {
                         val clients = adj[it]
                         val vProv = if (cycle == 0) params.V0 else data[cycle-1].V[it] // Vi
@@ -296,7 +368,7 @@ var random = MersenneTwister(100)
                                 if(params.sAgent!![it]==1 && params.sAgent!![j]==1) r = 1.0 // s-agents cooperation
                                 val policyR = if (misc.symmetricalModel)
                                     if (params.sAgent!![it]==1) providerPolicy(symmetricGS, p) else providerPolicy(symmetricGH, p)
-                                    else reporterPolicy(randExpoD(params.ExpoG), policyP, r) // Rij
+                                    else reporterPolicy( if(misc.useCalcDist) randCalcDist() else randExpoD(params.ExpoG) , policyP, r) // Rij
                                 meanPolicyR += policyR*vProv
                                 if(params.sAgent!![it]==1 && params.sAgent!![j]==1) counterSSCoop += 1 // debug
                                 counterAllCoop += 1 // debug
@@ -318,7 +390,7 @@ var random = MersenneTwister(100)
 
 
                     // Reputation aggregation
-                    // TODO Clustering
+                    // Clustering K-Means
                     val clusters = cluster(agentsR)
 
                     var meanRHigherSet = .0
